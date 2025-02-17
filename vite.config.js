@@ -6,6 +6,14 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server:{
+    proxy:{
+      "/api":{
+        target:"117.72.80.248",//此处之后修改为后端url
+        changeOrigin:true
+      }
+    }
+  },
   plugins: [
     vue(),
     vueDevTools(),

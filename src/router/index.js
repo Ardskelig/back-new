@@ -15,10 +15,12 @@ const router = createRouter({
   routes: [
     {
       path:'/login',
+      name:'login',
       component:LoginVue
     },
     {
       path:'/',
+      name:'home',
       component:LayoutVue,
       redirect:'/admin/form',
       children:[
