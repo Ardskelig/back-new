@@ -62,6 +62,15 @@
                           :value="ft.value"
                         />
                       </el-select>
+                      <!-- 添加选项编辑按钮 -->
+                      <el-button
+                        v-if="element.type === 'select'"
+                        type="primary"
+                        circle
+                        @click="showOptionDialog(element)"
+                      >
+                        <el-icon><Edit /></el-icon>
+                      </el-button>
                       <el-button
                         type="danger"
                         circle
@@ -72,6 +81,55 @@
                     </el-form-item>
                   </div>
                 </template>
+                <!-- 在模板中添加选项编辑对话框 -->
+                    <el-dialog
+                      v-model="optionDialog.visible"
+                      title="编辑下拉选项"
+                      width="600px"
+                    >
+                      <div class="option-editor">
+                        <!-- 批量输入方式 -->
+                        <el-input
+                          v-model="bulkOptions"
+                          type="textarea"
+                          :rows="4"
+                          placeholder="可批量输入选项（每行一个选项，格式：显示文本:值）例：男:male"
+                        />
+                        <div class="actions">
+                          <el-button @click="handleBulkAdd">批量添加</el-button>
+                          <span class="tip">或逐个添加：</span>
+                        </div>
+                    
+                        <!-- 逐个添加 -->
+                        <div class="single-add">
+                          <el-input v-model="newOption.label" placeholder="显示文本" style="width: 200px" />
+                          <el-input v-model="newOption.value" placeholder="选项值" style="width: 200px; margin: 0 10px" />
+                          <el-button type="primary" @click="addSingleOption">添加选项</el-button>
+                        </div>
+                    
+                        <!-- 现有选项列表 -->
+                        <el-table :data="currentOptions" class="option-table">
+                          <el-table-column prop="label" label="显示文本" />
+                          <el-table-column prop="value" label="选项值" />
+                          <el-table-column width="80">
+                            <template #default="{ $index }">
+                              <el-button
+                                type="danger"
+                                circle
+                                @click="currentOptions.splice($index, 1)"
+                              >
+                                <el-icon><Delete /></el-icon>
+                              </el-button>
+                            </template>
+                          </el-table-column>
+                        </el-table>
+                      </div>
+
+                      <template #footer>
+                        <el-button @click="optionDialog.visible = false">取消</el-button>
+                        <el-button type="primary" @click="saveOptions">保存选项</el-button>
+                      </template>
+                    </el-dialog>
               </draggable>
               <el-button @click="addField">+ 添加字段</el-button>
             </div>
@@ -88,7 +146,7 @@
                   >
                     <el-input v-model="previewData[field.key]" />
                   </el-form-item>
-  
+              
                   <!-- 下拉选择 -->
                   <el-form-item
                     v-if="field.type === 'select'"
@@ -103,8 +161,51 @@
                       />
                     </el-select>
                   </el-form-item>
-  
-                  <!-- 更多字段类型... -->
+              
+                  <!-- 多行文本 -->
+                  <el-form-item
+                    v-if="field.type === 'textarea'"
+                    :label="field.label"
+                  >
+                    <el-input
+                      v-model="previewData[field.key]"
+                      type="textarea"
+                      :rows="3"
+                      placeholder="请输入内容"
+                    />
+                  </el-form-item>
+              
+                  <!-- 日期选择 -->
+                  <el-form-item
+                    v-if="field.type === 'date'"
+                    :label="field.label"
+                  >
+                    <el-date-picker
+                      v-model="previewData[field.key]"
+                      type="date"
+                      placeholder="选择日期"
+                    />
+                  </el-form-item>
+              
+                  <!-- 文件上传 -->
+                  <el-form-item
+                    v-if="field.type === 'upload'"
+                    :label="field.label"
+                  >
+                    <el-upload
+                      action="#"
+                      :auto-upload="false"
+                      :limit="3"
+                      :on-exceed="handleExceed"
+                    >
+                      <el-button type="primary">点击上传</el-button>
+                      <template #tip>
+                        <div class="el-upload__tip">
+                          最多上传3个文件，单个文件不超过5MB
+                        </div>
+                      </template>
+                    </el-upload>
+                  </el-form-item>
                 </template>
               </el-form>
             </div>
@@ -154,8 +255,76 @@
   <script setup>
   import { ref, reactive } from 'vue'
   import { Rank, Delete } from '@element-plus/icons-vue'
+  import { Edit } from '@element-plus/icons-vue'
   import draggable from 'vuedraggable'
   
+
+// 添加选项编辑相关状态
+const optionDialog = reactive({
+  visible: false,
+  fieldIndex: -1
+})
+
+const bulkOptions = ref('')
+const newOption = reactive({ label: '', value: '' })
+const currentOptions = ref([])
+
+// 显示选项编辑对话框
+const showOptionDialog = (field) => {
+    console.log('******')
+  currentOptions.value = [...(field.options || [])]
+  optionDialog.visible=true
+}
+
+// 处理批量添加
+const handleBulkAdd = () => {
+  if (!bulkOptions.value) return
+  
+  const lines = bulkOptions.value.split('\n')
+  const newOptions = lines
+    .map(line => {
+      const [label, value] = line.split(':')
+      return { label: label?.trim(), value: value?.trim() || label?.trim() }
+    })
+    .filter(opt => opt.label)
+  
+  currentOptions.value = [...currentOptions.value, ...newOptions]
+  bulkOptions.value = ''
+}
+
+// 添加单个选项
+const addSingleOption = () => {
+  if (!newOption.label) {
+    ElMessage.warning('请填写显示文本')
+    return
+  }
+  
+  if (!newOption.value) {
+    newOption.value = newOption.label
+  }
+  
+  currentOptions.value.push({ ...newOption })
+  newOption.label = ''
+  newOption.value = ''
+}
+
+// 保存选项
+const saveOptions = () => {
+  // 验证选项
+  const values = currentOptions.value.map(opt => opt.value)
+  if (new Set(values).size !== values.length) {
+    ElMessage.error('存在重复的选项值')
+    return
+  }
+  
+  // 更新字段的options
+  const field = formFields.value[optionDialog.fieldIndex]
+  field.options = currentOptions.value
+  optionDialog.visible = false
+}
+
+
+
   // 步骤控制
   const step = ref(1)
   
@@ -275,5 +444,34 @@
     margin-top: 30px;
     text-align: center;
   }
+
+  .option-editor {
+  padding: 10px;
+}
+
+.actions {
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+}
+
+.tip {
+  color: #666;
+  margin-left: 15px;
+}
+
+.single-add {
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+}
+
+.option-table {
+  margin-top: 20px;
+}
+
+.option-table :deep(.el-table__row) td {
+  padding: 8px 0;
+}
   </style>
   
