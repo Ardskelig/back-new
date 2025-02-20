@@ -29,7 +29,7 @@ const router = createRouter({
           component:FormVue
         },
         {
-          path:'/admin/form/detail/:id',
+          path:'/admin/form/detail/:queryId',
           component:FormDetailVue
         },
         {

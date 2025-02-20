@@ -13,7 +13,10 @@
       </template>
       
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="表单类型">
+        <el-descriptions-item label="问卷id">
+          {{ queryId }}
+        </el-descriptions-item>
+        <el-descriptions-item label="问卷类型">
           {{ formData.type }}
         </el-descriptions-item>
         <el-descriptions-item label="创建时间">
@@ -22,7 +25,7 @@
         <el-descriptions-item label="参与人数">
           {{ formData.participants }}
         </el-descriptions-item>
-        <el-descriptions-item label="表单详情">
+        <el-descriptions-item label="问卷详情">
             <el-button type="primary" @click="showFormContent">查看表单具体内容</el-button>
         </el-descriptions-item>
       </el-descriptions>
@@ -142,7 +145,7 @@
 </template>
   
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed,onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -150,7 +153,7 @@ const formId = route.params.id
 const activeNames = ref([1, 2]) // 默认展开前两条
 const recordPage = ref(1)
 const recordTotal = ref(20) // 模拟总数据量
-
+const queryId = ref(null)
 
 const dialogVisible=ref(false)
 // 打开对话框的方法
@@ -284,7 +287,11 @@ const fieldsMap = {
   suggestion: '意见建议'
 }
 
-
+// 获取路由参数
+onMounted(() => {
+  queryId.value = route.params.queryId
+  // loadFormDetail(queryId.value)
+})
 </script>
 
 <style>

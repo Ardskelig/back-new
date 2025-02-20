@@ -28,6 +28,16 @@
                 />
               </el-select>
             </el-form-item>
+            <el-form-item label="问卷模板" prop="type" >
+              <el-select v-model="baseForm.cptId">
+                <el-option
+                  v-for="model in formModels"
+                  :key="model.value"
+                  :label="model.label"
+                  :value="model.value"
+                />
+              </el-select>
+            </el-form-item>
   
             <el-form-item label="截止时间">
               <el-date-picker
@@ -35,6 +45,16 @@
                 type="datetime"
                 placeholder="选择截止时间"
               />
+            </el-form-item>
+            <el-form-item label="凭证过期时间">
+              <el-date-picker
+                v-model="baseForm.vcvcdeadline"
+                type="datetime"
+                placeholder="选择截止时间"
+              />
+            </el-form-item>
+            <el-form-item label="机构did" prop="title" >
+              <el-input v-model="baseForm.issuerDid" placeholder="请输入机构did" />
             </el-form-item>
           </el-form>
         </div>
@@ -64,10 +84,10 @@
                       </el-select>
                       <!-- 添加选项编辑按钮 -->
                       <el-button
-                        v-if="element.type === 'select'"
+                        v-if="element.type === '下拉选择'"
                         type="primary"
                         circle
-                        @click="showOptionDialog(element,index)"
+                        @click="showOptionDialog(element)"
                       >
                         <el-icon><Edit /></el-icon>
                       </el-button>
@@ -95,7 +115,7 @@
                 <template v-for="(field, index) in formFields" :key="index">
                   <!-- 输入框 -->
                   <el-form-item 
-                    v-if="field.type === 'input'"
+                    v-if="field.type === '单行文本'"
                     :label="field.label"
                   >
                     <el-input v-model="previewData[field.key]" />
@@ -103,7 +123,7 @@
               
                   <!-- 下拉选择 -->
                   <el-form-item
-                    v-if="field.type === 'select'"
+                    v-if="field.type === '下拉选择'"
                     :label="field.label"
                   >
                     <el-select v-model="previewData[field.key]">
@@ -118,7 +138,7 @@
               
                   <!-- 多行文本 -->
                   <el-form-item
-                    v-if="field.type === 'textarea'"
+                    v-if="field.type === '多行文本'"
                     :label="field.label"
                   >
                     <el-input
@@ -131,7 +151,7 @@
               
                   <!-- 日期选择 -->
                   <el-form-item
-                    v-if="field.type === 'date'"
+                    v-if="field.type === '日期选择'"
                     :label="field.label"
                   >
                     <el-date-picker
@@ -143,7 +163,7 @@
               
                   <!-- 文件上传 -->
                   <el-form-item
-                    v-if="field.type === 'upload'"
+                    v-if="field.type === '文件上传'"
                     :label="field.label"
                   >
                     <el-upload
@@ -170,12 +190,12 @@
         <div v-show="step === 3">
           <h3>发布设置</h3>
           <el-form label-width="120px">
-            <el-form-item label="发布方式">
+            <!-- <el-form-item label="发布方式">
               <el-radio-group v-model="publishSettings.immediate">
                 <el-radio :label="true">立即发布</el-radio>
                 <el-radio :label="false">定时发布</el-radio>
               </el-radio-group>
-            </el-form-item>
+            </el-form-item> -->
   
             <el-form-item label="访问权限">
               <el-checkbox-group v-model="publishSettings.permissions">
@@ -260,15 +280,20 @@ import { ref, reactive } from 'vue'
 import { Rank, Delete } from '@element-plus/icons-vue'
 import { Edit } from '@element-plus/icons-vue'
 import draggable from 'vuedraggable'
-  
+import { valueEquals } from 'element-plus'
+import instance from "@/utils/request.js"
+import { ElMessage } from 'element-plus'
   // 步骤控制
 const step = ref(1)
 
 // step1中填写信息汇总
-const baseForm = reactive({
+const baseForm = ref({
   title: '',
   type: '',
-  deadline: null
+  deadline: null,
+  vcvcdeadline:null,
+  issuerDid:"did:tdid:w1:0x8ad750852661514cae2e8dda1b4587bd46072bcc",
+  cptId:null
 })
 // step1中表单类型中字段配置
 const formTypes=ref([
@@ -277,32 +302,47 @@ const formTypes=ref([
     label:"活动报名"
   },
   {
-    value:"信息搜集",
-    label:"信息搜集"
+    value:"信息采集",
+    label:"信息采集"
+  }
+])
+
+//step1中问卷模板
+const formModels=ref([
+  {
+    value:"2001",
+    label:"学校"
+  },
+  {
+    value:"2001",
+    label:"社团"
   }
 ])
 
 
 const formFields = ref([])
+// 修改后（直接使用中文值）
 const fieldTypes = [
-  { label: '单行文本', value: 'input' },
-  { label: '多行文本', value: 'textarea' },
-  { label: '下拉选择', value: 'select' },
-  { label: '日期选择', value: 'date' },
-  { label: '文件上传', value: 'upload' }
+  { label: '单行文本', value: '单行文本' },
+  { label: '多行文本', value: '多行文本' },
+  { label: '下拉选择', value: '下拉选择' },
+  { label: '日期选择', value: '日期选择' },
+  { label: '文件上传', value: '文件上传' }
 ]
 
-// 添加字段
+let fieldCounter = 0 // 在组件顶部定义计数器
+//增加问题
 const addField = () => {
   formFields.value.push({
     id: Date.now(),
     label: '新字段',
-    type: 'input',//初始默认为input
-    key: `field_${formFields.value.length + 1}`,
-    required: false,//初始设置为非必填
-    options: [] // 用于选择型字段
+    type: '单行文本',
+    key: `field_${++fieldCounter}`, // 使用自增计数器
+    required: false,
+    options: []
   })
 }
+
 
 // 选择型字段编辑页面显示
 const optionDialog = ref({
@@ -319,11 +359,10 @@ const newOption = reactive(
 const currentOptions = ref([])
 
 // 显示选项编辑对话框
-const showOptionDialog = (field,index) => {
+const showOptionDialog = (field) => {
 
-  console.log('******')
-  console.log(field)
-  console.log(index)
+  const index = formFields.value.findIndex(f => f.id === field.id)
+  optionDialog.value.fieldIndex = index
   currentOptions.value = [...(field.options || [])]
   optionDialog.value.fieldIndex=index
   optionDialog.value.visible=true
@@ -352,9 +391,12 @@ const addSingleOption = () => {
     ElMessage.warning('请填写显示文本')
     return
   }
-  //设置value=label
-  if (!newOption.value) {
-    newOption.value = newOption.label
+  // 默认 value = label（如果未填写）
+  newOption.value = newOption.value || newOption.label.trim()
+   // 检查重复
+   if (currentOptions.value.some(opt => opt.value === newOption.value)) {
+    ElMessage.error('选项值已存在，请修改')
+    return
   }
   
   currentOptions.value.push({ ...newOption })//创建一个newOption的副本，然后将这个副本增加到currentOptions中
@@ -405,21 +447,53 @@ const handleNextStep = () => {
 
 // 提交表单
 const submitForm = async () => {
+  // 转换时间格式
+  const formatTime = (date) => {
+    return date ? new Date(date).toISOString() : null
+  }
+
+  // 转换字段结构
+  const convertedFields = formFields.value.map(field => {
+    const converted = {
+      label: field.label,
+      type: field.type,
+      required: field.required || false  // 默认为false
+    }
+
+    // 处理下拉选项
+    if (field.type === '下拉选择' && field.options) {
+      converted.options = field.options.map(opt => {
+        // 如果后端需要字符串数组，这里可以改为 opt.label
+        return typeof opt === 'string' ? opt : opt.label
+      })
+    }
+
+    return converted
+  })
+
   const formData = {
-    ...baseForm,
-    fields: formFields.value,
-    settings: publishSettings
+    issuerDid: baseForm.value.issuerDid,
+    title: baseForm.value.title,
+    type: baseForm.value.type,
+    cptId: Number(baseForm.value.cptId), // 转换为数字
+    deadline: formatTime(baseForm.value.deadline),
+    expireTime: formatTime(baseForm.value.expireTime),
+    field: convertedFields
   }
+
+  console.log('最终提交数据:', JSON.stringify(formData, null, 2))//不使用替代器,设置缩进空格数2
   
-  try {
-    // 调用API提交数据
-    await api.createForm(formData)
-    ElMessage.success('表单创建成功')
-    router.push('/admin/forms')
-  } catch (error) {
-    ElMessage.error('表单创建失败')
-  }
+  const requestBody=JSON.stringify(formData,null,2)
+  console.log("请求体；",requestBody)
+  const response=await instance.post("/api/query/issueQuery",requestBody)
+  console.log(response)
+  ElMessage({
+    message: response.msg,
+    type: 'warning',
+  })
+
 }
+
 </script>
 
 <style scoped>

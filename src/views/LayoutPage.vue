@@ -129,7 +129,7 @@ import avatar from '@/assets/default.png'
     }
 
     .el-header {
-        background-color: #F8F8F8;
+        background-color: #999999;
         display: flex;
         align-items: center;
         justify-content: space-between;
