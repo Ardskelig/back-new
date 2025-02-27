@@ -35,7 +35,26 @@
         </template>
       </el-table-column>
       <el-table-column prop="queryId" label="ID" width="80" />
-      <el-table-column prop="title" label="表单名称" />
+      <el-table-column prop="title" label="问卷标题" width="100"/>
+      <el-table-column prop="vcName" label="凭证名称"  width="100"/>
+      <el-table-column prop="orgDid" label="发布机构" width="500" />
+      <el-table-column prop="logo" label="Logo" width="120">
+        <template #default="{ row }">
+          <el-image
+            v-if="row.logo"
+            :src="row.logo"
+            :preview-src-list="[row.logo]"
+            style="width: 100px; height: 100px"
+            fit="cover"
+          >
+            <template #error>
+              <div class="image-error">加载失败</div>
+            </template>
+          </el-image>
+          <span v-else>无Logo</span>
+        </template>
+      </el-table-column>
+
       <!-- <el-table-column prop="type" label="类型" width="120">
         <template #default="{row}">
           <el-tag :type="formTypeMap[row.type]?.tagType">
@@ -48,14 +67,19 @@
           {{ formatTime(row.deadline) }}
         </template>
       </el-table-column>
-      <el-table-column prop="orgDid" label="发布机构" width="600" />
+      <el-table-column prop="expireTime" label="凭证到期时间" width="180">
+        <template #default="{row}">
+          {{ formatTime(row.expireTime) }}
+        </template>
+      </el-table-column>
       
-      <el-table-column label="操作" width="200">
+      
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{row}">
           <el-button 
             type="primary" 
             size="small" 
-            @click="viewDetail(row.queryId)"
+            @click="viewDetail(row.queryId,row.blogId)"
           >
             查看
           </el-button>
@@ -81,13 +105,15 @@
   </template>
   
   <script setup>
-  import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, Plus } from '@element-plus/icons-vue'
 import instance from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
+
+const blogId=ref('')
 
 // 表单数据
 const formList = ref([])
@@ -106,13 +132,17 @@ const formatTime = (timeStr) => {
   return new Date(timeStr).toLocaleString()
 }
 
+const did="did:tdid:w1:0x6f4242b40bb6c98d1396860648dcf01b6a9c8b6a"
+
 // 加载表单数据
 const loadForms = async () => {
   try {
     loading.value = true
-    const response = await instance.get('/api/query/getQueries')
+    const response = await instance.post('/api/query/getQueriesByDid', { did })
+    console.log('response:', response)
     
     if (response.code === 1) {
+      blogId.value=response.data.blogId
       formList.value = response.data
     } else {
       ElMessage.error('数据加载失败: ' + response.msg)
@@ -145,8 +175,11 @@ const pagedForms = computed(() => {
 })
 
 // 查看详情
-const viewDetail = (queryId) => {
-  router.push(`/admin/form/detail/${queryId}`)
+const viewDetail = (queryId, blogId) => {
+  router.push({
+    path: `/admin/form/detail/${queryId}`,
+    query: { blogId } // 这里传递一个额外的参数
+  })
 }
 
 // 删除确认

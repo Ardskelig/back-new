@@ -1,5 +1,6 @@
 <!-- src/views/admin/FormCreatePage.vue -->
 <template>
+  <button @click="dialogVisible=true">查看</button>
     <div class="form-create">
       <!-- 创建步骤导航 -->
       <el-steps :active="step" finish-status="success" class="steps">
@@ -10,15 +11,44 @@
   
       <!-- 表单创建主体 -->
       <el-card class="card">
+        <!-- 步骤0：相关信息填写 -->
+        
         <!-- 步骤1：基本信息 -->
         <div v-show="step === 1">
           <h3>基本信息设置</h3>
           <el-form :model="baseForm" label-width="120px">
-            <el-form-item label="表单标题" prop="title" >
-              <el-input v-model="baseForm.title" placeholder="请输入表单标题" />
+            <el-form-item label="标题" prop="title" >
+              <el-input v-model="baseForm.title" placeholder="请输入标题" />
             </el-form-item>
-            
-            <el-form-item label="表单类型" prop="type" >
+            <el-form-item label="凭证名称" prop="title" >
+              <el-input v-model="baseForm.vcName" placeholder="请输入凭证名称" />
+            </el-form-item>
+            <el-form-item label="机构名称" prop="title" >
+              <el-input v-model="baseForm.issuerName" placeholder="请输入机构名称" />
+            </el-form-item>
+            <el-form-item label="机构logo">
+              <el-upload
+                action="#"
+                :auto-upload="false"
+                :limit="1"
+                :file-list="logoFileList"
+                :on-exceed="handleLogoExceed"
+                :on-change="handleLogoChange"
+                :before-upload="beforeUpload"
+                list-type="picture-card"
+              >
+                <el-button type="primary">点击上传</el-button>
+                <template #file="{ file }">
+                  <img :src="file.url" class="logo-preview" />
+                  <span class="el-upload-list__item-actions">
+                    <span class="el-upload-span">
+                      <el-icon><ZoomIn /></el-icon>
+                    </span>
+                  </span>
+                </template>
+              </el-upload>
+            </el-form-item>
+             <el-form-item label="表单类型" prop="type" >
               <el-select v-model="baseForm.type">
                 <el-option
                   v-for="type in formTypes"
@@ -28,6 +58,7 @@
                 />
               </el-select>
             </el-form-item>
+            <!--
             <el-form-item label="问卷模板" prop="type" >
               <el-select v-model="baseForm.cptId">
                 <el-option
@@ -37,7 +68,7 @@
                   :value="model.value"
                 />
               </el-select>
-            </el-form-item>
+            </el-form-item> -->
   
             <el-form-item label="截止时间">
               <el-date-picker
@@ -48,7 +79,7 @@
             </el-form-item>
             <el-form-item label="凭证过期时间">
               <el-date-picker
-                v-model="baseForm.vcvcdeadline"
+                v-model="baseForm.expireTime"
                 type="datetime"
                 placeholder="选择截止时间"
               />
@@ -170,7 +201,6 @@
                       action="#"
                       :auto-upload="false"
                       :limit="3"
-                      :on-exceed="handleExceed"
                     >
                       <el-button type="primary">点击上传</el-button>
                       <template #tip>
@@ -190,12 +220,12 @@
         <div v-show="step === 3">
           <h3>发布设置</h3>
           <el-form label-width="120px">
-            <!-- <el-form-item label="发布方式">
+            <el-form-item label="发布方式">
               <el-radio-group v-model="publishSettings.immediate">
                 <el-radio :label="true">立即发布</el-radio>
                 <el-radio :label="false">定时发布</el-radio>
               </el-radio-group>
-            </el-form-item> -->
+            </el-form-item>
   
             <el-form-item label="访问权限">
               <el-checkbox-group v-model="publishSettings.permissions">
@@ -204,7 +234,9 @@
                 <el-checkbox label="staff">教职工</el-checkbox>
               </el-checkbox-group>
             </el-form-item>
+            
           </el-form>
+          
         </div>
   
         <!-- 操作按钮 -->
@@ -230,17 +262,7 @@
       width="600px"
     >
       <div class="option-editor">
-        <!-- 批量输入方式 -->
-        <!-- <el-input
-          v-model="bulkOptions"
-          type="textarea"
-          :rows="4"
-          placeholder="可批量输入选项（每行一个选项，格式：显示文本:值）例：男:male"
-        />
-        <div class="actions">
-          <el-button @click="handleBulkAdd">批量添加</el-button>
-          <span class="tip">或逐个添加：</span>
-        </div> -->
+
     
         <!-- 逐个添加 -->
         <div class="single-add">
@@ -273,6 +295,62 @@
         <el-button type="primary" @click="saveOptions">保存选项</el-button>
       </template>
     </el-dialog>
+    <el-dialog
+              v-model="dialogVisible"
+              title="发布信息"
+              width="600px"
+            >
+            
+              <el-form label-width="80px">
+                <el-form-item label="标题">
+                  <el-input
+                  v-model="BlogForm.title"
+                    placeholder="请输入内容标题"
+                    maxlength="500"
+                  />
+                </el-form-item>
+                <!-- 文字内容输入 -->
+                <el-form-item label="内容">
+                  <el-input
+                    v-model="BlogForm.content"
+                    type="textarea"
+                    :rows="4"
+                    placeholder="请输入发布内容"
+                    maxlength="500"
+                    show-word-limit
+                  />
+                </el-form-item>
+
+                <!-- 文字内容输入 -->
+                <el-form-item label="添加标签">
+                  <el-input
+                    v-model="BlogForm.tag"
+                    placeholder="请输入标签"
+                    maxlength="500"
+                  />
+                </el-form-item>
+              
+                <!-- 图片上传 -->
+                <el-form-item label="图片">
+                  <el-upload
+                    v-model:file-list="fileList"
+                    multiple
+                    :limit="9"
+                    list-type="picture-card"
+                    :auto-upload="false"
+                    :on-change="handleChange"
+                    :before-upload="beforeUpload"
+                    :on-exceed="handleExceed"  
+                  >
+                  </el-upload>
+                </el-form-item>
+              </el-form>
+            
+              <template #footer>
+                <el-button @click="dialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="handleBlogSubmit">提交</el-button>
+              </template>
+            </el-dialog>
   </template>
   
 <script setup>
@@ -282,7 +360,8 @@ import { Edit } from '@element-plus/icons-vue'
 import draggable from 'vuedraggable'
 import { valueEquals } from 'element-plus'
 import instance from "@/utils/request.js"
-import { ElMessage } from 'element-plus'
+import { ElMessage,ElMessageBox } from 'element-plus'
+// import { c } from 'vite/dist/node/moduleRunnerTransport.d-CXw_Ws6P'
   // 步骤控制
 const step = ref(1)
 
@@ -291,33 +370,89 @@ const baseForm = ref({
   title: '',
   type: '',
   deadline: null,
-  vcvcdeadline:null,
-  issuerDid:"did:tdid:w1:0x8ad750852661514cae2e8dda1b4587bd46072bcc",
-  cptId:null
+  expireTime:null,
+  issuerDid:"did:tdid:w1:0x6f4242b40bb6c98d1396860648dcf01b6a9c8b6a",
+  vcName:'',
+  issuerName:'',
+  logo:'',
 })
 // step1中表单类型中字段配置
 const formTypes=ref([
   {
-    value:"活动报名",
-    label:"活动报名"
+    value:"insider",
+    label:"insider"
   },
   {
     value:"信息采集",
-    label:"信息采集"
+    label:"insider"
   }
 ])
 
-//step1中问卷模板
-const formModels=ref([
-  {
-    value:"2001",
-    label:"学校"
-  },
-  {
-    value:"2001",
-    label:"社团"
+// 文件列表控制
+const logoFileList = ref([])
+
+// 新增：单个文件上传方法
+const uploadFile = async (file) => {
+  console.log("11111111111111111111111111")
+  console.log("上传图片：",file)
+  const formData = new FormData()
+  formData.append('file', file)
+  console.log("上传图片：",formData)
+  try {
+    const response = await instance.post('/api/file/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    console.log("图片上传结果：",response)
+    if (response.code === 1) {
+      return response.data // 返回图片 URL
+    } else {
+      throw new Error(response.msg || '图片上传失败')
+    }
+  } catch (error) {
+    throw new Error(`图片上传失败: ${error.message}`)
   }
-])
+}
+
+const handleLogoExceed = () => {
+  ElMessage.warning('最多只能上传 1 张图片')
+}
+
+// 文件选择处理
+const handleLogoChange = async (File) => {
+  console.log("校验",File)
+  try {
+    // 自动替换旧文件
+    logoFileList.value = [File]
+    
+    // 上传前校验（复用已有逻辑）
+    if (!['image/jpeg', 'image/png'].includes(File.raw?.type)) {
+      throw new Error('只能上传 JPG/PNG 格式的图片!')
+    }
+    if (File.raw?.size / 1024 / 1024 > 2) {
+      throw new Error('图片大小不能超过 2MB!')
+    }
+    console.log("上传图片",File.raw)
+    console.log("22222222222222222222")
+    // 执行上传
+    const url = await uploadFile(File.raw)
+    console.log('上传成功:', url)
+    // 更新表单数据
+    baseForm.value.logo = url
+    
+    // 更新文件列表显示
+    logoFileList.value = [{
+      name: File.name,
+      url: url,
+      status: 'success'
+    }]
+    
+  } catch (error) {
+    ElMessage.error('111',error.message)
+    logoFileList.value = []
+  }
+}
 
 
 const formFields = ref([])
@@ -338,7 +473,7 @@ const addField = () => {
     label: '新字段',
     type: '单行文本',
     key: `field_${++fieldCounter}`, // 使用自增计数器
-    required: false,
+    required: true,
     options: []
   })
 }
@@ -444,6 +579,8 @@ const handleNextStep = () => {
     submitForm()
   }
 }
+const dialogVisible = ref(false)
+const queryId = ref(2)
 
 // 提交表单
 const submitForm = async () => {
@@ -455,7 +592,7 @@ const submitForm = async () => {
   // 转换字段结构
   const convertedFields = formFields.value.map(field => {
     const converted = {
-      label: field.label,
+      title: field.label,
       type: field.type,
       required: field.required || false  // 默认为false
     }
@@ -474,26 +611,133 @@ const submitForm = async () => {
   const formData = {
     issuerDid: baseForm.value.issuerDid,
     title: baseForm.value.title,
+    vcName: baseForm.value.vcName,
     type: baseForm.value.type,
-    cptId: Number(baseForm.value.cptId), // 转换为数字
     deadline: formatTime(baseForm.value.deadline),
     expireTime: formatTime(baseForm.value.expireTime),
-    field: convertedFields
+    logo: baseForm.value.logo,
+    fields: convertedFields
   }
 
   console.log('最终提交数据:', JSON.stringify(formData, null, 2))//不使用替代器,设置缩进空格数2
   
   const requestBody=JSON.stringify(formData,null,2)
   console.log("请求体；",requestBody)
-  const response=await instance.post("/api/query/issueQuery",requestBody)
-  console.log(response)
-  ElMessage({
+  const response=await instance.post("/api/query/issueQuery",requestBody,{
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  if(response.code===1){
+    queryId.value=response.data
+    ElMessageBox.confirm(
+    '成功创建问卷,继续编辑blog以发布？',
+    'Warning',
+    {
+      confirmButtonText: '继续编辑',
+      cancelButtonText: '无需编辑',
+      type: 'warning',
+    }
+  )
+    .then(() => {
+      dialogVisible.value = true
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '取消编辑博客',
+      })
+    })
+  }else{
+    ElMessage({
     message: response.msg,
     type: 'warning',
   })
-
+  }
+  console.log(response)
 }
 
+//博客？部分提交
+
+const BlogForm = ref({
+  title:'',
+  content: '',
+  tag:'',
+  queryId:'',
+})
+const fileList = ref([])
+
+// 处理文件选择
+const handleChange = (file, files) => {
+  fileList.value = files
+}
+
+// 新增文件超出限制处理
+const handleExceed = () => {
+  ElMessage.warning('最多只能上传 9 张图片')
+}
+
+// 文件上传前的校验
+const beforeUpload = (file) => {
+  const isImage = ['image/jpeg', 'image/png'].includes(file.type)
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传 JPG/PNG 格式的图片!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('单张图片大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+
+// 提交表单
+const handleBlogSubmit = async () => {
+  if (!BlogForm.value.content.trim() && fileList.value.length === 0) {
+    return ElMessage.warning('请填写内容或上传图片')
+  }
+console.log('文件列表',fileList.value)
+  try {
+    // 新增：上传所有图片并获取 URL
+    const imageUrls = await Promise.all(
+      fileList.value.map(file => uploadFile(file.raw))
+    )
+
+    const blogData = {
+      title: BlogForm.value.title,
+      content: BlogForm.value.content,
+      tag: BlogForm.value.tag,
+      queryId: queryId.value
+    }
+
+    // 新增：将图片 URL 添加到表单数据
+    imageUrls.forEach((url, index) => {
+      if (index < 9) { // 最多支持 9 张图片
+        blogData[`image${index + 1}`] = url
+      }
+    })
+    console.log('提交数据:', blogData)
+    const response =await instance.post("/api/blog/issueBlog",blogData)
+    if(response.code===1){
+      ElMessage.success('提交成功')
+      dialogVisible.value = false
+      window.location.reload()  // 刷新页面
+    }else{
+      ElMessage.error(response.msg)
+      dialogVisible.value = false
+    }
+    
+    // 重置表单
+    BlogForm.value = { title: '', content: '', tag: '', queryId: '' }
+    fileList.value = []
+  } catch (error) {
+    ElMessage.error(error.message || '提交失败')
+    console.error('提交错误:', error)
+  }
+}
 </script>
 
 <style scoped>
@@ -568,6 +812,12 @@ const submitForm = async () => {
 
 .option-table :deep(.el-table__row) td {
   padding: 8px 0;
+}
+
+.logo-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
   </style>
   

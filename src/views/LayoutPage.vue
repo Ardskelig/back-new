@@ -52,17 +52,23 @@ import avatar from '@/assets/default.png'
                     </el-icon>
                     <span>chat-bpmn</span>
                 </el-menu-item>
-                <el-menu-item >
+                <el-menu-item index="/admin/form">
                     <el-icon>
                         <Promotion />
                     </el-icon>
-                    <span>咨询</span>
+                    <span>问卷管理</span>
                 </el-menu-item>
-                <el-menu-item >
+                <el-menu-item index="/admin/form/create">
                     <el-icon>
                         <Promotion />
                     </el-icon>
-                    <span>日程</span>
+                    <span>发布问卷</span>
+                </el-menu-item>
+                <el-menu-item index="/admin/activity">
+                    <el-icon>
+                        <Promotion />
+                    </el-icon>
+                    <span>我的活动</span>
                 </el-menu-item>
             </el-menu>
         </el-aside>
@@ -129,7 +135,7 @@ import avatar from '@/assets/default.png'
     }
 
     .el-header {
-        background-color: #999999;
+        background-color: #F5F7FA;
         display: flex;
         align-items: center;
         justify-content: space-between;

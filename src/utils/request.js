@@ -2,9 +2,6 @@ import axios from "axios";
 
 const request=axios.create({
     timeout:10000,
-    headers: {
-        "Content-Type":"application/json"//默认使用json数据
-    }
 
 })
 
