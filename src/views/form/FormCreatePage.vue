@@ -1,6 +1,5 @@
 <!-- src/views/admin/FormCreatePage.vue -->
 <template>
-  <button @click="dialogVisible=true">查看</button>
     <div class="form-create">
       <!-- 创建步骤导航 -->
       <el-steps :active="step" finish-status="success" class="steps">

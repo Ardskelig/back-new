@@ -79,14 +79,14 @@
           <el-button 
             type="primary" 
             size="small" 
-            @click="viewDetail(row.queryId,row.blogId)"
+            @click="viewDetail(row.queryId,row)"
           >
             查看
           </el-button>
           <el-button 
             type="danger" 
             size="small"
-            @click="confirmDelete(row.queryId)"
+            @click="confirmDelete(row)"
           >
             删除
           </el-button>
@@ -175,31 +175,35 @@ const pagedForms = computed(() => {
 })
 
 // 查看详情
-const viewDetail = (queryId, blogId) => {
+const viewDetail = (queryId,item) => {
+  console.log('item:', item)
   router.push({
     path: `/admin/form/detail/${queryId}`,
-    query: { blogId } // 这里传递一个额外的参数
+    query:{
+      item:JSON.stringify(item)
+    } // 这里传递一个额外的参数
   })
 }
 
 // 删除确认
 const confirmDelete = async (id) => {
-  try {
-    await ElMessageBox.confirm('确定删除该表单吗？', '警告', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+  console.log('id:', id)
+  // try {
+  //   await ElMessageBox.confirm('确定删除该表单吗？', '警告', {
+  //     confirmButtonText: '确定',
+  //     cancelButtonText: '取消',
+  //     type: 'warning'
+  //   })
     
-    // 调用删除接口
-    // await instance.delete(`/api/query/deleteQuery/${id}`)
+  //   // 调用删除接口
+  //   // await instance.delete(`/api/query/deleteQuery/${id}`)
     
-    // 本地更新数据
-    formList.value = formList.value.filter(form => form.queryId !== id)
-    ElMessage.success('删除成功')
-  } catch (error) {
-    // 取消删除不处理
-  }
+  //   // 本地更新数据
+  //   formList.value = formList.value.filter(form => form.queryId !== id)
+  //   ElMessage.success('删除成功')
+  // } catch (error) {
+  //   // 取消删除不处理
+  // }
 }
 
 const navigateToCreate=()=>{

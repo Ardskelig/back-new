@@ -44,9 +44,9 @@
           
         </el-form>
         <div style="text-align: center;">
-            <el-button type="primary" @click="handleRegister" >注册</el-button>
+            <el-button type="primary" @click="handleRegister" class="login-btn">注册</el-button>
         </div>
-        <el-link type="primary" @click="$router.push('/login')"><-返回登录</el-link>
+        <el-link type="primary" @click="$router.push('/login')" style="margin: 10px;"><-返回登录</el-link>
       </el-card>
     </div>
   </template>
@@ -168,6 +168,19 @@
     margin-top: 8px;
     color: #666;
     font-size: 12px;
+  }
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    background: #4c56d1;
+    color: white;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  }
+  
+  .login-btn:hover {
+    background: #3a47a0;
   }
   </style>
   

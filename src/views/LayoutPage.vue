@@ -20,7 +20,7 @@ import avatar from '@/assets/default.png'
             <el-menu active-text-color="#4C4C6E" background-color="#1E1E2D"  text-color="#fff"
                 router>
                 <div style="font-size:x-large;color :white;padding: 20px;"><strong>链证</strong></div>
-                <el-sub-menu >
+                <!-- <el-sub-menu >
                     <template #title>
                         <el-icon>
                             <UserFilled />
@@ -45,7 +45,7 @@ import avatar from '@/assets/default.png'
                         </el-icon>
                         <span>其他管理</span>
                     </el-menu-item>
-                </el-sub-menu>
+                </el-sub-menu> -->
                 <el-menu-item >
                     <el-icon>
                         <Promotion />

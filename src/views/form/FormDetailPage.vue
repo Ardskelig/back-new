@@ -5,7 +5,7 @@
     <el-card class="card">
       <template #header>
         <div class="card-header">
-          <h2>{{ formData.title }}</h2>
+          <h2>{{ itemContent.title }}</h2>
           <el-tag >
             进行中
           </el-tag>
@@ -16,21 +16,21 @@
         <el-descriptions-item label="问卷id">
           {{ queryId }}
         </el-descriptions-item>
-        <el-descriptions-item label="问卷类型">
-          {{ formData.type }}
+        <el-descriptions-item label="凭证名称">
+          {{ itemContent.vcName }}
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间">
-          {{formData.createTime}}
+        <el-descriptions-item label="凭证到期时间">
+          {{ itemContent.expireTime }}
         </el-descriptions-item>
-        <el-descriptions-item label="参与人数">
-          {{ formData.participants }}
+        <el-descriptions-item label="问卷到期时间">
+          {{ itemContent.deadline }}
         </el-descriptions-item>
         <el-descriptions-item label="问卷详情">
             <el-button type="primary" @click="showFormContent">查看表单具体内容</el-button>
         </el-descriptions-item>
         <el-descriptions-item label="博客详情">
-            <el-button type="primary" v-if="blogId.value!=-1" @click="showBlogContent">查看博客具体内容</el-button>
-            <el-button type="primary" v-else>编写博客</el-button>
+            <el-button type="primary" v-if="blogId!=-1" @click="showBlogContent">查看博客具体内容</el-button>
+            <el-button type="primary" v-if="blogId==-1" @click="showBlogCreate">编写博客</el-button>
         </el-descriptions-item>
       </el-descriptions>
     </el-card>
@@ -49,23 +49,22 @@
           </el-row>
      </el-card>
 
-    <!-- 填写记录 -->
-    <el-card class="card">
+     <el-card class="card">
       <template #header>
         <h3>填写记录</h3>
       </template>
-      
+
       <el-collapse v-model="activeNames">
         <el-collapse-item 
-          v-for="record in records" 
-          :key="record.id" 
-          :title="`提交时间：${record.submitTime}`"
-          :name="record.id"
+          v-for="(record, index) in records" 
+          :key="index"
+          :title="`提交时间：${record.createTime}`"
+          :name="index"
         >
-          <el-descriptions :column="2">
+          <el-descriptions :column="2" border>
             <el-descriptions-item 
-              v-for="(value, key) in record.data" 
-              :key="key" 
+              v-for="(value, key) in getDisplayFields(record)" 
+              :key="key"
               :label="fieldsMap[key]"
             >
               {{ value }}
@@ -73,7 +72,7 @@
           </el-descriptions>
         </el-collapse-item>
       </el-collapse>
-      
+    
       <el-pagination
         v-model:current-page="recordPage"
         :page-size="10"
@@ -166,7 +165,7 @@
             v-for="(image, index) in blogImages"
             :key="index"
             :src="image"
-            style="width: 100%; margin-bottom: 10px"
+            style="width: 100px; height: 100px"
             fit="cover"
           />
         </div>
@@ -176,6 +175,62 @@
         <el-button @click="dialogBlogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+    <el-dialog
+              v-model="dialogBlogCreateVisible"
+              title="发布信息"
+              width="600px"
+            >
+            
+              <el-form label-width="80px">
+                <el-form-item label="标题">
+                  <el-input
+                  v-model="BlogForm.title"
+                    placeholder="请输入内容标题"
+                    maxlength="500"
+                  />
+                </el-form-item>
+                <!-- 文字内容输入 -->
+                <el-form-item label="内容">
+                  <el-input
+                    v-model="BlogForm.content"
+                    type="textarea"
+                    :rows="4"
+                    placeholder="请输入发布内容"
+                    maxlength="500"
+                    show-word-limit
+                  />
+                </el-form-item>
+
+                <!-- 文字内容输入 -->
+                <el-form-item label="添加标签">
+                  <el-input
+                    v-model="BlogForm.tag"
+                    placeholder="请输入标签"
+                    maxlength="500"
+                  />
+                </el-form-item>
+              
+                <!-- 图片上传 -->
+                <el-form-item label="图片">
+                  <el-upload
+                    v-model:file-list="fileList"
+                    multiple
+                    :limit="9"
+                    list-type="picture-card"
+                    :auto-upload="false"
+                    :on-change="handleChange"
+                    :before-upload="beforeUpload"
+                    :on-exceed="handleExceed"  
+                  >
+                  </el-upload>
+                </el-form-item>
+              </el-form>
+            
+              <template #footer>
+                <el-button @click="dialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="handleBlogSubmit">提交</el-button>
+              </template>
+            </el-dialog>
 </template>
   
 <script setup>
@@ -186,16 +241,21 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const formId = route.params.id
-const activeNames = ref([1, 2]) // 默认展开前两条
+const activeNames = ref([0,1]) // 默认展开前两条
 const recordPage = ref(1)
 const recordTotal = ref(20) // 模拟总数据量
 const queryId = ref(null)
-const blogId = ref(route.query.blogId)  // 获取查询参数
+  
+const itemContent = ref(JSON.parse(route.query.item))
+const blogId = ref(JSON.parse(route.query.item).blogId)// 获取查询参数
+console.log('itemContent:', itemContent.value)
 console.log('blogId:', blogId.value)
 const dialogVisible=ref(false)
 const dialogBlogVisible = ref(false)
+const dialogBlogCreateVisible = ref(false)
 // 打开对话框的方法
-const showFormContent = () => {
+const showFormContent = async () => {
+  await getQueryContent(); // 确保先加载数据
   dialogVisible.value = true
 }
 
@@ -238,18 +298,6 @@ const formFields = ref([
   }
 ])
 
-
-
-// 表单模拟数据
-const formData = ref({
-  id: formId,
-  title: '入校申请表单',
-  type: 'campus',
-  status: 1,
-  participants: 235,
-  createTime: '2024-03-01 14:30'
-})
-
 // 统计信息:总访问量以及完成率
 const stats = ref({
   views: 1500,
@@ -257,67 +305,66 @@ const stats = ref({
 })
 
 // 填写记录
+// 调整后的填写记录数据结构
 const records = ref([
   {
-    id: 1,
-    submitTime: '2024-03-02 09:30:15',
-    data: {
-      name: '张三',
-      studentId: '20200001',
-      reason: '参加学术讲座',
-      contact: '13800138000',
-      department: '计算机学院'
-    }
+    name: '张三',
+    did: '111',
+    type: 'insider',
+    phoneNum: '123123123',
+    createTime: '2025-02-27 16:12:40'
   },
   {
-    id: 2,
-    submitTime: '2024-03-02 10:15:22',
-    data: {
-      name: '李四',
-      studentId: '20200002',
-      reason: '实验室交流',
-      contact: '13912345678',
-      grade: '大三',
-      suggestion: '希望延长开放时间'
-    }
-  },
-  {
-    id: 3,
-    submitTime: '2024-03-02 11:05:47',
-    data: {
-      name: '王五',
-      studentId: '20200003',
-      reason: '社团活动',
-      participants: 5,
-      department: '电子工程学院'
-    }
-  },
-  {
-    id: 4,
-    submitTime: '2024-03-02 14:20:33',
-    data: {
-      name: '赵六',
-      studentId: '20200004',
-      contact: '13678901234',
-      grade: '研一',
-      suggestion: '预约系统改进建议'
-    }
+    name: '李四',
+    did: '222',
+    type: 'outsider',
+    phoneNum: '321321321',
+    createTime: '2025-02-27 16:13:54'
   }
 ])
 
+
 // 字段映射
+// 更新后的字段映射
 const fieldsMap = {
   name: '姓名',
-  studentId: '学号',
-  reason: '申请理由',
-  contact: '联系方式',
-  participants: '参与人数',
-  department: '院系',
-  grade: '年级',
-  suggestion: '意见建议'
+  did: 'did编号',
+  type: '人员类型',
+  phoneNum: '联系电话',
+  createTime: '提交时间'
+}
+
+// 过滤需要显示的字段（排除可能存在的空值或不需要显示的字段）
+const getDisplayFields = (record) => {
+  return Object.fromEntries(
+    Object.entries(record).filter(([key]) => 
+      key !== 'commit_id' && 
+      key !== 'query_id' &&
+      fieldsMap[key]
+    )
+  )
+}
+
+//获取问卷填写情况
+const getRecordsContent=async ()=>{
+  const response=await instance.post('/api/commit/getCommits', {
+    queryId: 2,
+  })
+  console.log("response",response)
+  if(response.code===1){
+    records.value=response.data
+    console.log("人数",records.value.length)
+    stats.value.views=records.value.length
+  }else{
+    ElMessage({
+    message: response.msg,
+    type: 'warning',
+  })
+  }
 }
 
 
+//获取问卷内容
 const getQueryContent=async ()=>{
   const response=await instance.post('/api/question/getQuestion',{
     queryId:queryId.value
@@ -335,6 +382,8 @@ const getQueryContent=async ()=>{
 
 const blogData = ref(null)
 const blogImages = ref([])
+
+//获取博客内容
 const getBlogContent= async () => {
   if(blogId.value!=-1){
     try {
@@ -352,7 +401,7 @@ const getBlogContent= async () => {
         data.image5, data.image6, data.image7, data.image8, data.image9
       ].filter(image => image != null); // 过滤null和undefined
 
-      dialogBlogVisible.value = true
+      //dialogBlogVisible.value = true
     } else {
       ElMessage.error('数据加载失败：' + response.msg)
     }
@@ -372,11 +421,126 @@ const resetBlogData = () => {
 // 获取路由参数
 onMounted(() => {
   queryId.value = route.params.queryId
-  getQueryContent()
-  getBlogContent()
+  getRecordsContent()
+  // getQueryContent()
+  // getBlogContent()
   // loadFormDetail(queryId.value)
 })
 
+
+
+//编写博客部分
+const showBlogCreate = () => {
+  dialogBlogCreateVisible.value = true
+}
+
+const BlogForm = ref({
+  title:'',
+  content: '',
+  tag:'',
+  queryId:'',
+})
+
+const fileList = ref([])
+
+// 新增：单个文件上传方法
+const uploadFile = async (file) => {
+  console.log("11111111111111111111111111")
+  console.log("上传图片：",file)
+  const formData = new FormData()
+  formData.append('file', file)
+  console.log("上传图片：",formData)
+  try {
+    const response = await instance.post('/api/file/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    console.log("图片上传结果：",response)
+    if (response.code === 1) {
+      return response.data // 返回图片 URL
+    } else {
+      throw new Error(response.msg || '图片上传失败')
+    }
+  } catch (error) {
+    throw new Error(`图片上传失败: ${error.message}`)
+  }
+}
+
+// 处理文件选择
+const handleChange = (file, files) => {
+  fileList.value = files
+}
+
+// 新增文件超出限制处理
+const handleExceed = () => {
+  ElMessage.warning('最多只能上传 9 张图片')
+}
+
+// 文件上传前的校验
+const beforeUpload = (file) => {
+  const isImage = ['image/jpeg', 'image/png'].includes(file.type)
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传 JPG/PNG 格式的图片!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('单张图片大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+
+// 提交表单
+const handleBlogSubmit = async () => {
+  if (!BlogForm.value.content.trim() && fileList.value.length === 0) {
+    return ElMessage.warning('请填写内容或上传图片')
+  }
+console.log('文件列表',fileList.value)
+  try {
+    // 新增：上传所有图片并获取 URL
+    const imageUrls = await Promise.all(
+      fileList.value.map(file => uploadFile(file.raw))
+    )
+
+    const blogData = {
+      title: BlogForm.value.title,
+      content: BlogForm.value.content,
+      tag: BlogForm.value.tag,
+      queryId: queryId.value
+    }
+
+    // 新增：将图片 URL 添加到表单数据
+    imageUrls.forEach((url, index) => {
+      if (index < 9) { // 最多支持 9 张图片
+        blogData[`image${index + 1}`] = url
+      }
+    })
+    console.log('提交数据:', blogData)
+    const response =await instance.post("/api/blog/issueBlog",blogData)
+    if(response.code===1){
+      ElMessage.success('提交成功')
+      blogId.value=response.data.blogId
+      dialogBlogCreateVisible.value = false
+      getBlogContent()
+      window.location.reload()  // 刷新页面
+    }else{
+      ElMessage.error(response.msg)
+      dialogVisible.value = false
+    }
+    
+    // 重置表单
+    BlogForm.value = { title: '', content: '', tag: '', queryId: '' }
+    fileList.value = []
+
+  } catch (error) {
+    ElMessage.error(error.message || '提交失败')
+    console.error('提交错误:', error)
+  }
+}
 </script>
 
 <style>
