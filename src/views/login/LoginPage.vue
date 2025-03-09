@@ -43,7 +43,10 @@
   import { ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { ElMessage } from 'element-plus'
-  
+  import {useUserStore} from '@/stores/counter.js'
+
+const userStore =useUserStore()
+
   const router = useRouter()
   const loginFormRef = ref(null)
   const loading = ref(false)
@@ -55,7 +58,7 @@
   const loginRules = {
     did: [
       { required: true, message: '请输入DID', trigger: 'blur' },
-      { min: 10, max: 50, message: '长度在10到50个字符', trigger: 'blur' }
+      { min: 10, max: 100, message: '长度在10到50个字符', trigger: 'blur' }
     ]
   }
   
@@ -65,8 +68,11 @@
       loading.value = true
       // 调用登录接口
       // const res = await api.login(loginForm.value)
+      console.log("输入的did",loginForm.value.did)
       ElMessage.success('登录成功')
-      router.push('/dashboard')
+      userStore.setUserDid(loginForm.value.did)
+      console.log('打印pinia中的did',userStore.userDid)
+      router.push('/')
     } catch (error) {
       console.error(error)
     } finally {

@@ -237,8 +237,8 @@
 import instance from '@/utils/request'
 import { ElMessage } from 'element-plus'
 import { ref, computed,onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-
+import { useRoute,useRouter } from 'vue-router'
+const router=useRouter()
 const route = useRoute()
 const formId = route.params.id
 const activeNames = ref([0,1]) // 默认展开前两条
@@ -348,7 +348,7 @@ const getDisplayFields = (record) => {
 //获取问卷填写情况
 const getRecordsContent=async ()=>{
   const response=await instance.post('/api/commit/getCommits', {
-    queryId: 2,
+    queryId: queryId.value,
   })
   console.log("response",response)
   if(response.code===1){
@@ -525,8 +525,10 @@ console.log('文件列表',fileList.value)
       ElMessage.success('提交成功')
       blogId.value=response.data.blogId
       dialogBlogCreateVisible.value = false
-      getBlogContent()
-      window.location.reload()  // 刷新页面
+      //目前先跳转到原来的界面吧
+      router.push("/")
+      // getBlogContent()
+      // window.location.reload()  // 刷新页面
     }else{
       ElMessage.error(response.msg)
       dialogVisible.value = false

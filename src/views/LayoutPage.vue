@@ -17,58 +17,29 @@ import avatar from '@/assets/default.png'
         <!-- 左侧菜单 -->
         <el-aside width="200px">
             
-            <el-menu active-text-color="#4C4C6E" background-color="#1E1E2D"  text-color="#fff"
-                router>
+            <el-menu
+              :default-active="$route.path"
+              active-text-color="#4C4C6E"
+              background-color="#1E1E2D"
+              text-color="#fff"
+              router
+            >
                 <div style="font-size:x-large;color :white;padding: 20px;"><strong>链证</strong></div>
-                <!-- <el-sub-menu >
-                    <template #title>
-                        <el-icon>
-                            <UserFilled />
-                        </el-icon>
-                        <span>主页-管理</span>
-                    </template>
-                    <el-menu-item index="/admin/club">
-                        <el-icon>
-                            <User />
-                        </el-icon>
-                        <span>社团管理</span>
-                    </el-menu-item>
-                    <el-menu-item index="/admin/form">
-                        <el-icon>
-                            <Crop />
-                        </el-icon>
-                        <span>表单管理</span>
-                    </el-menu-item>
-                    <el-menu-item >
-                        <el-icon>
-                            <EditPen />
-                        </el-icon>
-                        <span>其他管理</span>
-                    </el-menu-item>
-                </el-sub-menu> -->
-                <el-menu-item >
-                    <el-icon>
-                        <Promotion />
-                    </el-icon>
+                <el-menu-item index="/admin/chat">
+                    <el-icon><ChatDotRound /></el-icon>
                     <span>chat-bpmn</span>
                 </el-menu-item>
                 <el-menu-item index="/admin/form">
-                    <el-icon>
-                        <Promotion />
-                    </el-icon>
+                    <el-icon><Document /></el-icon>
                     <span>问卷管理</span>
                 </el-menu-item>
                 <el-menu-item index="/admin/form/create">
-                    <el-icon>
-                        <Promotion />
-                    </el-icon>
+                    <el-icon><DocumentAdd /></el-icon>
                     <span>发布问卷</span>
                 </el-menu-item>
                 <el-menu-item index="/admin/activity">
-                    <el-icon>
-                        <Promotion />
-                    </el-icon>
-                    <span>我的活动</span>
+                    <el-icon><Menu /></el-icon>
+                    <span>活动管理</span>
                 </el-menu-item>
             </el-menu>
         </el-aside>

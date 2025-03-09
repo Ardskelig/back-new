@@ -110,7 +110,9 @@ import { useRouter } from 'vue-router'
 import { Search, Plus } from '@element-plus/icons-vue'
 import instance from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
+import { useUserStore } from '@/stores/counter'
+const userStore=useUserStore()
+const did=userStore.userDid
 const router = useRouter()
 
 const blogId=ref('')
@@ -132,7 +134,7 @@ const formatTime = (timeStr) => {
   return new Date(timeStr).toLocaleString()
 }
 
-const did="did:tdid:w1:0x6f4242b40bb6c98d1396860648dcf01b6a9c8b6a"
+// const did="did:tdid:w1:0x6f4242b40bb6c98d1396860648dcf01b6a9c8b6a"
 
 // 加载表单数据
 const loadForms = async () => {

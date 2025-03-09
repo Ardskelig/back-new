@@ -1,12 +1,15 @@
-import { ref, computed } from 'vue'
-import { defineStore } from 'pinia'
+import { defineStore } from "pinia";
+import { ref } from "vue";
 
-export const useCounterStore = defineStore('counter', () => {
-  const count = ref(0)
-  const doubleCount = computed(() => count.value * 2)
-  function increment() {
-    count.value++
+export const useUserStore = defineStore("user", () => {
+  const userDid = ref("did:tdid:w1:0x7a4a2ae6212c4b8d7f7bc1da95b81b78fae7fdd2");
+
+  // 设置用户名
+  function setUserDid(did) {
+    userDid.value=did
   }
-
-  return { count, doubleCount, increment }
-})
+  // function getUserDid() {
+  //   return userDid.value
+  // }
+  return { userDid,setUserDid };
+});

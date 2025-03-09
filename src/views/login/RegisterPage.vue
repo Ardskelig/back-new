@@ -8,7 +8,7 @@
           </el-form-item>
   
           <el-form-item label="申请人did" prop="did" :rules="[{ required: true, message: '请输入did', trigger: 'blur' }]">
-            <el-input v-model="formData.did" placeholder="请输入组织名称" />
+            <el-input v-model="formData.did" placeholder="请输入组织did" />
           </el-form-item>
   
           <el-form-item label="组织执照" prop="orgLicence" :rules="[{ required: true, message: '请上传组织执照', trigger: 'change' }]">
@@ -61,9 +61,9 @@
   
   
   const formData = ref({
-    orgName: '呦西小厨',
+    orgName: '',
     orgLicence: '',
-    did: 'did:tdid:w1:0x6f4242b40bb6c98d1396860648dcf01b6a9c8b6a', // 示例 DID
+    did: '', // 示例 DID
     logo: ''
   });
   

@@ -360,6 +360,11 @@ import draggable from 'vuedraggable'
 import { valueEquals } from 'element-plus'
 import instance from "@/utils/request.js"
 import { ElMessage,ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
+import {useUserStore} from "@/stores/counter.js"
+const userStore=useUserStore()
+const did=userStore.userDid
+const router = useRouter()
 // import { c } from 'vite/dist/node/moduleRunnerTransport.d-CXw_Ws6P'
   // 步骤控制
 const step = ref(1)
@@ -370,7 +375,7 @@ const baseForm = ref({
   type: '',
   deadline: null,
   expireTime:null,
-  issuerDid:"did:tdid:w1:0x6f4242b40bb6c98d1396860648dcf01b6a9c8b6a",
+  issuerDid:did,
   vcName:'',
   issuerName:'',
   logo:'',
@@ -382,8 +387,12 @@ const formTypes=ref([
     label:"insider"
   },
   {
-    value:"信息采集",
-    label:"insider"
+    value:"outsider",
+    label:"outsider"
+  },
+  {
+    value:"both",
+    label:"both"
   }
 ])
 
@@ -392,18 +401,18 @@ const logoFileList = ref([])
 
 // 新增：单个文件上传方法
 const uploadFile = async (file) => {
-  console.log("11111111111111111111111111")
-  console.log("上传图片：",file)
+  // console.log("11111111111111111111111111")
+  // console.log("上传图片：",file)
   const formData = new FormData()
   formData.append('file', file)
-  console.log("上传图片：",formData)
+  // console.log("上传图片：",formData)
   try {
     const response = await instance.post('/api/file/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
-    console.log("图片上传结果：",response)
+    // console.log("图片上传结果：",response)
     if (response.code === 1) {
       return response.data // 返回图片 URL
     } else {
@@ -646,6 +655,7 @@ const submitForm = async () => {
         type: 'info',
         message: '取消编辑博客',
       })
+      router.push("/")
     })
   }else{
     ElMessage({
@@ -679,14 +689,9 @@ const handleExceed = () => {
 // 文件上传前的校验
 const beforeUpload = (file) => {
   const isImage = ['image/jpeg', 'image/png'].includes(file.type)
-  const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isImage) {
     ElMessage.error('只能上传 JPG/PNG 格式的图片!')
-    return false
-  }
-  if (!isLt2M) {
-    ElMessage.error('单张图片大小不能超过 2MB!')
     return false
   }
   return true
@@ -723,10 +728,11 @@ console.log('文件列表',fileList.value)
     if(response.code===1){
       ElMessage.success('提交成功')
       dialogVisible.value = false
-      window.location.reload()  // 刷新页面
+      router.push("/")
     }else{
       ElMessage.error(response.msg)
       dialogVisible.value = false
+      router.push("/")
     }
     
     // 重置表单
@@ -735,6 +741,7 @@ console.log('文件列表',fileList.value)
   } catch (error) {
     ElMessage.error(error.message || '提交失败')
     console.error('提交错误:', error)
+    router.push("/")
   }
 }
 </script>
