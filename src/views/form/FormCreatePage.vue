@@ -1,5 +1,6 @@
 <!-- src/views/admin/FormCreatePage.vue -->
 <template>
+  <!-- <button @click="dialogVisible=true">dianji</button> -->
     <div class="form-create">
       <!-- 创建步骤导航 -->
       <el-steps :active="step" finish-status="success" class="steps">
@@ -625,7 +626,8 @@ const submitForm = async () => {
     deadline: formatTime(baseForm.value.deadline),
     expireTime: formatTime(baseForm.value.expireTime),
     logo: baseForm.value.logo,
-    fields: convertedFields
+    fields: convertedFields,
+    account:baseForm.value.account
   }
 
   console.log('最终提交数据:', JSON.stringify(formData, null, 2))//不使用替代器,设置缩进空格数2
@@ -649,6 +651,7 @@ const submitForm = async () => {
     }
   )
     .then(() => {
+      console.log("选择继续")
       dialogVisible.value = true
     })
     .catch(() => {
@@ -664,6 +667,7 @@ const submitForm = async () => {
     type: 'warning',
   })
   }
+  router.push("/")
   console.log(response)
 }
 
@@ -678,8 +682,8 @@ const BlogForm = ref({
 const fileList = ref([])
 
 // 处理文件选择
-const handleChange = (file, files) => {
-  fileList.value = files
+const handleChange = (file, fileList) => {
+  fileList.value = fileList
 }
 
 // 新增文件超出限制处理
