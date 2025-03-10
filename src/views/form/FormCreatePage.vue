@@ -57,17 +57,6 @@
                 />
               </el-select>
             </el-form-item>
-            <!--
-            <el-form-item label="问卷模板" prop="type" >
-              <el-select v-model="baseForm.cptId">
-                <el-option
-                  v-for="model in formModels"
-                  :key="model.value"
-                  :label="model.label"
-                  :value="model.value"
-                />
-              </el-select>
-            </el-form-item> -->
   
             <el-form-item label="截止时间">
               <el-date-picker
@@ -76,6 +65,7 @@
                 placeholder="选择截止时间"
               />
             </el-form-item>
+            
             <el-form-item label="凭证过期时间">
               <el-date-picker
                 v-model="baseForm.expireTime"
@@ -83,9 +73,15 @@
                 placeholder="选择截止时间"
               />
             </el-form-item>
-            <el-form-item label="机构did" prop="title" >
-              <el-input v-model="baseForm.issuerDid" placeholder="请输入机构did" />
+            <el-form-item label="设置凭证额度？">
+              <el-switch v-model="showSwitch" />
             </el-form-item>
+            <el-form-item label="凭证额度" v-show="showSwitch">
+              <el-input-number v-model="baseForm.account" :min="-1" :max="10000" @change="handleChange" />
+            </el-form-item>
+            <!-- <el-form-item label="机构did" prop="title" >
+              <el-input v-model="baseForm.issuerDid" placeholder="请输入机构did" />
+            </el-form-item> -->
           </el-form>
         </div>
   
@@ -298,6 +294,7 @@
               v-model="dialogVisible"
               title="发布信息"
               width="600px"
+              v-loading="loading"
             >
             
               <el-form label-width="80px">
@@ -368,6 +365,8 @@ const router = useRouter()
 // import { c } from 'vite/dist/node/moduleRunnerTransport.d-CXw_Ws6P'
   // 步骤控制
 const step = ref(1)
+const showSwitch=ref(false)
+const loading=ref(false)
 
 // step1中填写信息汇总
 const baseForm = ref({
@@ -379,6 +378,7 @@ const baseForm = ref({
   vcName:'',
   issuerName:'',
   logo:'',
+  account:-1,
 })
 // step1中表单类型中字段配置
 const formTypes=ref([
@@ -592,6 +592,7 @@ const queryId = ref(2)
 
 // 提交表单
 const submitForm = async () => {
+
   // 转换时间格式
   const formatTime = (date) => {
     return date ? new Date(date).toISOString() : null
@@ -700,7 +701,9 @@ const beforeUpload = (file) => {
 
 // 提交表单
 const handleBlogSubmit = async () => {
+  loading.value=true
   if (!BlogForm.value.content.trim() && fileList.value.length === 0) {
+    loading.value=false
     return ElMessage.warning('请填写内容或上传图片')
   }
 console.log('文件列表',fileList.value)
@@ -726,12 +729,16 @@ console.log('文件列表',fileList.value)
     console.log('提交数据:', blogData)
     const response =await instance.post("/api/blog/issueBlog",blogData)
     if(response.code===1){
+      loading.value=false
       ElMessage.success('提交成功')
       dialogVisible.value = false
+      
       router.push("/")
     }else{
+      loading.value=false
       ElMessage.error(response.msg)
       dialogVisible.value = false
+      
       router.push("/")
     }
     
@@ -739,6 +746,7 @@ console.log('文件列表',fileList.value)
     BlogForm.value = { title: '', content: '', tag: '', queryId: '' }
     fileList.value = []
   } catch (error) {
+    loading.value=false
     ElMessage.error(error.message || '提交失败')
     console.error('提交错误:', error)
     router.push("/")

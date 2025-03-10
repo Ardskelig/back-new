@@ -51,8 +51,21 @@
 
      <el-card class="card">
       <template #header>
+      <div class="header-wrapper">
         <h3>填写记录</h3>
-      </template>
+        <div style="display: flex; gap: 10px;">
+          <el-input
+            v-model="searchName"
+            placeholder="请输入姓名搜索"
+            clearable
+            style="width: 200px;"
+            @keyup.enter="handleSearch"
+          />
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+        </div>
+      </div>
+    </template>
+
 
       <el-collapse v-model="activeNames">
         <el-collapse-item 
@@ -69,16 +82,21 @@
             >
               {{ value }}
             </el-descriptions-item>
+            <el-descriptions-item >
+              <el-button  @click="showEditDialog(record)">修改额度</el-button>
+            </el-descriptions-item>
           </el-descriptions>
         </el-collapse-item>
+        
       </el-collapse>
     
       <el-pagination
-        v-model:current-page="recordPage"
-        :page-size="10"
-        :total="recordTotal"
-        layout="prev, pager, next"
-      />
+      v-model:current-page="recordPage"
+      :page-size="pageSize"
+      :total="recordTotal"
+      layout="prev, pager, next"
+      @current-change="getRecordsContent"
+    />
     </el-card>
   </div>
   <el-dialog 
@@ -231,12 +249,33 @@
                 <el-button type="primary" @click="handleBlogSubmit">提交</el-button>
               </template>
             </el-dialog>
+ <!-- 添加额度修改对话框 -->
+ <el-dialog
+    v-model="editDialogVisible"
+    title="修改额度"
+    width="30%"
+  >
+    <el-form :model="editForm" label-width="80px">
+      <el-form-item label="扣除额度" prop="value">
+        <el-input-number 
+          v-model="editForm.value" 
+          :min="0" 
+          :step="100"
+          controls-position="right"
+        />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="editDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="submitEdit">确认修改</el-button>
+    </template>
+  </el-dialog>
 </template>
   
 <script setup>
 import instance from '@/utils/request'
 import { ElMessage } from 'element-plus'
-import { ref, computed,onMounted } from 'vue'
+import { ref, computed,onMounted,watch } from 'vue'
 import { useRoute,useRouter } from 'vue-router'
 const router=useRouter()
 const route = useRoute()
@@ -244,8 +283,16 @@ const formId = route.params.id
 const activeNames = ref([0,1]) // 默认展开前两条
 const recordPage = ref(1)
 const recordTotal = ref(20) // 模拟总数据量
+const editDialogVisible = ref(false)
+const editForm = ref({
+  commitId: '',
+  value: 0
+})
+const currentRecord = ref(null)
 const queryId = ref(null)
-  
+const searchName = ref('')
+const pageSize = ref(10)
+// const commitId=ref(null)
 const itemContent = ref(JSON.parse(route.query.item))
 const blogId = ref(JSON.parse(route.query.item).blogId)// 获取查询参数
 console.log('itemContent:', itemContent.value)
@@ -312,14 +359,16 @@ const records = ref([
     did: '111',
     type: 'insider',
     phoneNum: '123123123',
-    createTime: '2025-02-27 16:12:40'
+    createTime: '2025-02-27 16:12:40',
+    commitId:'-1'
   },
   {
     name: '李四',
     did: '222',
     type: 'outsider',
     phoneNum: '321321321',
-    createTime: '2025-02-27 16:13:54'
+    createTime: '2025-02-27 16:13:54',
+    commitId:'-1'
   }
 ])
 
@@ -331,7 +380,8 @@ const fieldsMap = {
   did: 'did编号',
   type: '人员类型',
   phoneNum: '联系电话',
-  createTime: '提交时间'
+  createTime: '提交时间',
+  account:"账户余额"
 }
 
 // 过滤需要显示的字段（排除可能存在的空值或不需要显示的字段）
@@ -339,6 +389,7 @@ const getDisplayFields = (record) => {
   return Object.fromEntries(
     Object.entries(record).filter(([key]) => 
       key !== 'commit_id' && 
+      key !== 'phoneNum' && 
       key !== 'query_id' &&
       fieldsMap[key]
     )
@@ -346,23 +397,43 @@ const getDisplayFields = (record) => {
 }
 
 //获取问卷填写情况
-const getRecordsContent=async ()=>{
-  const response=await instance.post('/api/commit/getCommits', {
-    queryId: queryId.value,
-  })
-  console.log("response",response)
-  if(response.code===1){
-    records.value=response.data
-    console.log("人数",records.value.length)
-    stats.value.views=records.value.length
-  }else{
-    ElMessage({
-    message: response.msg,
-    type: 'warning',
-  })
+// 修改获取记录的请求方法
+const getRecordsContent = async () => {
+  try {
+    const response = await instance.post('/api/commit/getCommits', {
+      queryId: queryId.value,
+      current: recordPage.value,
+      size: pageSize.value,
+      name: searchName.value.trim()
+    })
+    console.log("人员填写记录",response)
+    if(response.code === 1){
+      // commitId.value=response.data.commitId
+      records.value = response.data
+      recordTotal.value = response.data.length
+      // stats.value.views = response.data.total
+      // 计算完成率（根据实际业务逻辑调整）
+      if(recordTotal.value > 0) {
+        const completed = records.value.filter(r => r.status === '完成').length
+        stats.value.completionRate = Math.round((completed / pageSize.value) * 100)
+      }
+    }
+  } catch (error) {
+    ElMessage.error('获取记录失败')
+    console.error(error)
   }
 }
 
+// 新增搜索处理函数
+const handleSearch = () => {
+  recordPage.value = 1
+  getRecordsContent()
+}
+
+// 监听页码变化
+watch(recordPage, () => {
+  getRecordsContent()
+})
 
 //获取问卷内容
 const getQueryContent=async ()=>{
@@ -543,12 +614,52 @@ console.log('文件列表',fileList.value)
     console.error('提交错误:', error)
   }
 }
+// 显示修改对话框
+const showEditDialog = (record) => {
+  currentRecord.value = record
+  editForm.value = {
+    commitId: record.commitId,
+    value: record.account || 0
+  }
+  editDialogVisible.value = true
+}
+
+// 提交修改
+const submitEdit = async () => {
+  if (editForm.value.value < 0) {
+    ElMessage.warning('额度不能为负数')
+    return
+  }
+  
+  try {
+    const response = await instance.post('/api/commit/modifyAccount', {
+      value: editForm.value.value,
+      commitId: editForm.value.commitId
+    })
+    
+    if (response.code === 1) {
+      ElMessage.success('修改成功')
+      // 更新本地数据
+      currentRecord.value.account = editForm.value.value
+      editDialogVisible.value = false
+    } else {
+      ElMessage.error(response.msg || '修改失败')
+    }
+  } catch (error) {
+    console.error('修改额度失败:', error)
+    ElMessage.error('修改请求失败')
+  }
+}
 </script>
 
 <style>
 .card {
     margin: 5px;
 }
-
+.header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 </style>
   
