@@ -1,6 +1,6 @@
 <template>
     <!-- 主容器 -->
-    <div style="display: flex; flex-direction: row; height: 100vh">
+    <div style="display: flex; flex-direction: row; height: 86.5vh;margin:0%">
       <div class="chat-container">
         <!-- 反馈请求事件 -->
         <!-- 用户消息事件 -->
@@ -327,8 +327,38 @@
   </script>
   
   <style>
+
+/* 在组件样式部分添加 */
+.djs-palette {
+  /* 设置垂直方向排列 */
+  flex-direction: column !important;
+  /* 限制宽度 */
+  width: 45px !important;
+}
+
+.djs-palette-entries {
+  /* 禁止换行 */
+  flex-wrap: nowrap !important;
+  /* 垂直排列 */
+  flex-direction: column !important;
+  /* 条目间距 */
+  gap: 5px !important;
+}
+
+.djs-palette-group {
+  /* 每个工具组垂直排列 */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.djs-palette-entry {
+  /* 每个工具项占据整行 */
+  flex: 0 0 auto !important;
+  margin: 2px 0 !important;
+}
+
   #canvas {
-    margin: 10px;
+    margin: 0px;
   }
   
   .chat-container {
@@ -338,6 +368,7 @@
   .canvas-container {
     flex: 4;
     border: 2px solid gray;
+    height: 700px;
   }
   
   @media (min-width: 1800px) {

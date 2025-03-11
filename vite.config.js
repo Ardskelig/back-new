@@ -9,8 +9,8 @@ export default defineConfig({
   server:{
     proxy:{
       "/api":{
-        target:"http://chaindid.natapp1.cc",//此处之后修改为后端url
-        // target:"http://117.72.80.248:9999",
+        // target:"http://chaindid.natapp1.cc",//此处之后修改为后端url
+        target:"http://117.72.80.248:9999",
         changeOrigin:true
       }
     }

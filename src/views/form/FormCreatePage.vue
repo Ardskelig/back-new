@@ -625,6 +625,7 @@ const submitForm = async () => {
     deadline: formatTime(baseForm.value.deadline),
     expireTime: formatTime(baseForm.value.expireTime),
     logo: baseForm.value.logo,
+    account:baseform.value.account,
     fields: convertedFields
   }
 
