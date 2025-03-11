@@ -9,7 +9,7 @@
             size="x-large"
             class="mr-2"
           />
-          <span class="app-title">BPMN Assistant</span>
+          <span class="app-title">BPMN</span>
         </div>
         <div class="d-flex align-center">
           <v-tooltip text="New chat" location="bottom">
@@ -70,7 +70,7 @@
       </div>
 
       <div v-if="messages.length === 0">
-        <v-alert
+        <!-- <v-alert
           type="warning"
           text="Supported elements: start and end events, tasks (user, service), gateways (exclusive, parallel), sequence flows"
           class="mb-3"
@@ -79,6 +79,11 @@
         <v-alert
           type="info"
           text="Welcome to BPMN Assistant! I can help you understand and create BPMN processes. Let's start by discussing your BPMN needs or creating a new process from scratch. How would you like to begin?"
+          class="mb-3"
+        /> -->
+        <v-alert
+          type="info"
+          text="欢迎使用BPMN流程建模AI助手，你可以让我建立一个流程，我会围绕流程回答相关问题"
           class="mb-3"
         />
       </div>
@@ -391,18 +396,19 @@ export default {
 .chat-interface {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 90vh;
   max-width: 600px;
   margin: 0 auto;
 }
 
 .sticky-top {
-  position: sticky;
+  position: flex;
   top: 0;
   background-color: white;
   z-index: 1;
-  padding: 4px 0;
+  padding: 1px 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  height: 52px;
 }
 
 .message-container {
