@@ -625,8 +625,8 @@ const submitForm = async () => {
     deadline: formatTime(baseForm.value.deadline),
     expireTime: formatTime(baseForm.value.expireTime),
     logo: baseForm.value.logo,
-    account:baseform.value.account,
-    fields: convertedFields
+    fields: convertedFields,
+    account:baseForm.value.account
   }
 
   console.log('最终提交数据:', JSON.stringify(formData, null, 2))//不使用替代器,设置缩进空格数2
